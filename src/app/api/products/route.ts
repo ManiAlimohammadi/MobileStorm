@@ -23,10 +23,10 @@ export async function GET(request: NextRequest) {
     const where: Prisma.ProductWhereInput = {};
 
     if (params.search) {
-      where.name = { contains: params.search, mode: "insensitive" };
+      where.name = { contains: params.search };
     }
     if (params.brand) {
-      where.brand = { equals: params.brand, mode: "insensitive" };
+      where.brand = { equals: params.brand };
     }
     if (params.category) {
       where.category = { equals: params.category };
