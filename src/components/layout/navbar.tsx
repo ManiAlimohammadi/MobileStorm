@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart, Search, Menu, X, Smartphone,
-  Moon, Sun, ChevronDown, ArrowLeft, Zap, Package,
+  Moon, Sun, ChevronDown, ArrowLeft, Zap, Package, User,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn, formatPrice } from "@/lib/utils";
@@ -38,6 +38,7 @@ export function Navbar() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState<{ name: string; role: string } | null>(null);
   const items = useCartStore((s) => s.items);
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,7 +49,8 @@ export function Navbar() {
     setMounted(true);
     const dismissed = localStorage.getItem("announcement-v1") === "1";
     setAnnouncementVisible(!dismissed);
-  }, []);
+    fetch("/api/auth/me").then((r) => r.ok ? r.json() : null).then((d) => d && setUser(d)).catch(() => {});
+  }, [pathname]);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20);
@@ -252,6 +254,23 @@ export function Navbar() {
                 </Button>
               )}
 
+              {/* User / Login */}
+              {mounted && (
+                user ? (
+                  <Link href={user.role === "ADMIN" ? "/admin" : "/account"}
+                    className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-all border border-border/60 hover:border-border">
+                    <User className="h-3.5 w-3.5" />
+                    <span className="hidden md:block text-xs max-w-[80px] truncate">{user.name}</span>
+                  </Link>
+                ) : (
+                  <Link href="/login"
+                    className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-all border border-border/60 hover:border-border">
+                    <User className="h-3.5 w-3.5" />
+                    <span className="hidden md:block text-xs">ورود</span>
+                  </Link>
+                )
+              )}
+
               {/* Cart */}
               <Link href="/cart">
                 <Button variant="ghost" size="icon" className="relative h-9 w-9 text-muted-foreground">
@@ -301,6 +320,15 @@ export function Navbar() {
                   pathname === "/products" ? "text-brand-600 bg-brand-50 dark:bg-brand-950/50" : "text-muted-foreground hover:bg-accent")}>
                   همه محصولات
                 </Link>
+                {user ? (
+                  <Link href={user.role === "ADMIN" ? "/admin" : "/account"} className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent transition-colors">
+                    <User className="h-4 w-4" /> حساب کاربری ({user.name})
+                  </Link>
+                ) : (
+                  <Link href="/login" className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-colors">
+                    <User className="h-4 w-4" /> ورود / ثبت‌نام
+                  </Link>
+                )}
 
                 <div className="pt-3">
                   <p className="px-3 pb-2 text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-wider">دسته‌بندی‌ها</p>
