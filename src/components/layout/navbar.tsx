@@ -7,11 +7,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart, Search, Menu, X, Smartphone,
-  Moon, Sun, ChevronDown, ArrowLeft, Zap, Package, User,
+  Moon, Sun, ChevronDown, ArrowLeft, Zap, Package, User, Heart,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn, formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
+import { useWishlistStore } from "@/store/wishlist";
 import { Button } from "@/components/ui/button";
 import { CATEGORY_META, CATEGORY_ORDER } from "@/lib/categories";
 
@@ -40,6 +41,7 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<{ name: string; role: string } | null>(null);
   const items = useCartStore((s) => s.items);
+  const wishlistItems = useWishlistStore((s) => s.items);
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -270,6 +272,22 @@ export function Navbar() {
                   </Link>
                 )
               )}
+
+              {/* Wishlist */}
+              <Link href="/wishlist">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 text-muted-foreground">
+                  <Heart className="h-4 w-4" />
+                  <AnimatePresence>
+                    {wishlistItems.length > 0 && (
+                      <motion.span key="wbadge"
+                        initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                        className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] px-0.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
+                        {wishlistItems.length > 99 ? "99+" : wishlistItems.length}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </Button>
+              </Link>
 
               {/* Cart */}
               <Link href="/cart">

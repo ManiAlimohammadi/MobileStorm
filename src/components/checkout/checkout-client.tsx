@@ -40,11 +40,19 @@ export function CheckoutClient() {
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => setSessionUser(d))
+      .then((d) => {
+        setSessionUser(d);
+        if (d?.name) {
+          const parts = d.name.trim().split(" ");
+          setValue("firstName", parts[0] || "");
+          if (parts.length > 1) setValue("lastName", parts.slice(1).join(" "));
+        }
+        if (d?.phone) setValue("phone", d.phone);
+      })
       .catch(() => setSessionUser(null));
   }, []);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) });
   const totalPrice = getTotalPrice();
 
   const onSubmit = async (data: FormData) => {

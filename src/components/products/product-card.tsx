@@ -3,10 +3,11 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ShoppingCart, CheckCircle2, Star } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingCart, CheckCircle2, Star, Heart } from "lucide-react";
 import { cn, formatPrice, truncate } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
+import { useWishlistStore } from "@/store/wishlist";
 import { toast } from "@/components/ui/toaster";
 import type { Product } from "@/types";
 import { CATEGORY_META } from "@/lib/categories";
@@ -20,6 +21,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const [imgError, setImgError] = useState(false);
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
+  const { toggle: toggleWishlist, has: inWishlist } = useWishlistStore();
+  const wished = inWishlist(product.id);
   const catMeta = CATEGORY_META[product.category];
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -29,6 +32,17 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     setAdded(true);
     toast({ title: "افزوده شد!", description: truncate(product.name, 40) + " به سبد اضافه شد.", variant: "success" });
     setTimeout(() => setAdded(false), 2000);
+  };
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(product);
+    toast({
+      title: wished ? "از علاقه‌مندی‌ها حذف شد" : "به علاقه‌مندی‌ها اضافه شد",
+      description: truncate(product.name, 40),
+      variant: wished ? "default" : "success",
+    });
   };
 
   return (
@@ -74,6 +88,25 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
                 </span>
               )}
             </div>
+
+            {/* Wishlist button */}
+            <motion.button
+              onClick={handleWishlist}
+              whileTap={{ scale: 0.8 }}
+              className="absolute top-2.5 left-2.5 z-10 h-7 w-7 flex items-center justify-center rounded-xl bg-card/90 backdrop-blur-sm border border-border/60 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={wished ? "filled" : "empty"}
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.6, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <Heart className={cn("h-3.5 w-3.5 transition-colors", wished ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
+                </motion.div>
+              </AnimatePresence>
+            </motion.button>
 
             {/* Category emoji */}
             {catMeta && (
