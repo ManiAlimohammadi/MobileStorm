@@ -8,6 +8,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  role      UserRole @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
 model Product {
   id            String   @id @default(cuid())
   productId     String   @unique
@@ -43,10 +62,12 @@ model Order {
   totalAmount   Float
   status        OrderStatus @default(PENDING)
   emailSent     Boolean     @default(false)
+  userId        String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
   items OrderItem[]
+  user  User?       @relation(fields: [userId], references: [id])
 
   @@map("orders")
 }

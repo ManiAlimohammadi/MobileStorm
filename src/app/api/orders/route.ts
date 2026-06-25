@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmail } from "@/lib/email";
 import { generateTrackingCode } from "@/lib/tracking";
+import { getSession } from "@/lib/auth";
 import { z } from "zod";
 
 const orderSchema = z.object({
@@ -44,6 +45,8 @@ export async function POST(request: NextRequest) {
       codeExists = await prisma.order.findUnique({ where: { trackingCode: finalTrackingCode } });
     }
 
+    const session = await getSession();
+
     // Save order
     const order = await prisma.order.create({
       data: {
@@ -55,6 +58,7 @@ export async function POST(request: NextRequest) {
         notes: data.notes,
         totalAmount,
         emailSent: false,
+        userId: session?.userId ?? null,
         items: {
           create: data.items.map((item) => ({
             productId: item.productId,
