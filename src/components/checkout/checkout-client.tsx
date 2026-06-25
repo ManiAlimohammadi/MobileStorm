@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   CheckCircle2, ShoppingBag, User, Phone, MapPin, MessageSquare,
-  ArrowRight, Package, Shield, Truck, ClipboardCopy, Check,
+  ArrowRight, Package, Shield, Truck, ClipboardCopy, Check, LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,12 +27,22 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
+type SessionUser = { name: string; email: string; role: string };
+
 export function CheckoutClient() {
   const { items, getTotalPrice, clearCart } = useCartStore();
   const [submitting, setSubmitting] = useState(false);
   const [orderResult, setOrderResult] = useState<{ id: string; trackingCode: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionUser, setSessionUser] = useState<SessionUser | null | undefined>(undefined);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => setSessionUser(d))
+      .catch(() => setSessionUser(null));
+  }, []);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) });
   const totalPrice = getTotalPrice();
@@ -72,6 +82,11 @@ export function CheckoutClient() {
     }
   };
 
+  // Loading auth state
+  if (sessionUser === undefined) {
+    return <div className="flex items-center justify-center min-h-[80vh]"><div className="h-8 w-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" /></div>;
+  }
+
   // Empty cart
   if (!items.length && !orderResult) {
     return (
@@ -84,6 +99,35 @@ export function CheckoutClient() {
           <p className="text-muted-foreground mb-7 text-sm">ابتدا محصولی به سبد خرید اضافه کنید</p>
           <Button asChild variant="brand" size="lg"><Link href="/products">مشاهده محصولات</Link></Button>
         </div>
+      </div>
+    );
+  }
+
+  // Not logged in — login gate
+  if (!sessionUser) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] pt-16 px-4">
+        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.3 }}
+          className="text-center max-w-sm w-full">
+          <div className="w-20 h-20 rounded-full bg-brand-50 dark:bg-brand-950/40 flex items-center justify-center mx-auto mb-6">
+            <LogIn className="h-9 w-9 text-brand-600" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">برای ادامه وارد شوید</h2>
+          <p className="text-muted-foreground mb-8 text-sm leading-relaxed">
+            برای تکمیل خرید و پیگیری سفارش‌هایتان، ابتدا وارد حساب کاربری خود شوید یا ثبت‌نام کنید.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button asChild variant="brand" size="lg">
+              <Link href="/login?next=/checkout">ورود به حساب</Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/register?next=/checkout">ثبت‌نام رایگان</Link>
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-6">
+            سبد خرید شما ذخیره شده و پس از ورود در دسترس است.
+          </p>
+        </motion.div>
       </div>
     );
   }
@@ -101,8 +145,7 @@ export function CheckoutClient() {
 
           <h2 className="text-3xl font-black mb-2">سفارش ثبت شد! 🎉</h2>
           <p className="text-muted-foreground mb-7 leading-relaxed text-sm">
-            سفارش شما با موفقیت ثبت شد. اطلاعات سفارش برای مدیر ارسال شد.
-            تیم ما در اسرع وقت با شما تماس می‌گیرد.
+            سفارش شما با موفقیت ثبت شد. می‌توانید وضعیت سفارش را در حساب کاربری خود پیگیری کنید.
           </p>
 
           {/* Tracking code card */}
@@ -121,8 +164,8 @@ export function CheckoutClient() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button asChild variant="brand" size="lg" className="flex-1"><Link href="/products">ادامه خرید</Link></Button>
-            <Button asChild variant="outline" size="lg" className="flex-1"><Link href="/">صفحه اصلی</Link></Button>
+            <Button asChild variant="brand" size="lg" className="flex-1"><Link href="/account">پیگیری سفارش</Link></Button>
+            <Button asChild variant="outline" size="lg" className="flex-1"><Link href="/products">ادامه خرید</Link></Button>
           </div>
         </motion.div>
       </div>

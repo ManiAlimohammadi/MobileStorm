@@ -16,8 +16,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <nav className="flex items-center gap-4">
               {[
                 { href: "/admin/products", label: "محصولات" },
-                { href: "/admin/products/add", label: "+ افزودن محصول" },
+                { href: "/admin/products/add", label: "+ محصول" },
                 { href: "/admin/orders", label: "سفارش‌ها" },
+                { href: "/admin/customers", label: "مشتریان" },
               ].map(({ href, label }) => (
                 <Link key={href} href={href} className="text-sm text-muted-foreground hover:text-foreground transition">
                   {label}
